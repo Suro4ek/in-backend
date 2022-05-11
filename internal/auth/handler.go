@@ -20,11 +20,6 @@ type handler struct {
 	repository user.Repository
 }
 
-func (h *handler) RegisterAuth(router *gin.RouterGroup) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewHandler(logger *logging.Logger, repository user.Repository) handlers.Handler {
 	return &handler{
 		logger:     logger,
@@ -37,17 +32,19 @@ func (h *handler) Register(router *gin.Engine) {
 }
 
 func (h *handler) Login(ctx *gin.Context) {
-	var credential LoginCredentials
-	credential.Username = ctx.PostForm("username")
-	credential.Password = ctx.PostForm("password")
-	//TODO check empty username and password
-	usr, err := h.repository.GetByUsername(context.TODO(), credential.Username)
+	username := ctx.PostForm("username")
+	password := ctx.PostForm("password")
+	if username == "" || password == "" {
+		ctx.String(http.StatusNotFound, "empty string")
+		return
+	}
+	usr, err := h.repository.GetByUsername(context.TODO(), username)
 	if err != nil {
 		ctx.String(http.StatusNotFound, "data not found")
 		return
 	}
 	fmt.Println(usr.PasswordHash)
-	if err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(credential.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(password)); err != nil {
 		ctx.String(http.StatusUnauthorized, "wrong password")
 		return
 	}

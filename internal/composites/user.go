@@ -10,7 +10,7 @@ import (
 
 type UserComposite struct {
 	Repository user.Repository
-	Handler    handlers.Handler
+	Handler    handlers.HandlerAuth
 }
 
 func NewUserComposite(client *postgres.Client, logger *logging.Logger) (*UserComposite, error) {

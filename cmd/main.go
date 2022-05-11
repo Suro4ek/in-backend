@@ -29,7 +29,7 @@ func main() {
 	authComposite, _ := composites.NewAuthComposite(&logger, userComposite.Repository)
 	authComposite.Handler.Register(r)
 
-	err := r.Run("0.0.0.0:8080")
+	err := r.Run(cfg.Listen.Host + ":" + cfg.Listen.Port)
 	if err != nil {
 		logger.Errorf("error startup application %t", err)
 		return

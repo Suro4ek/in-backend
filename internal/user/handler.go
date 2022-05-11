@@ -25,15 +25,11 @@ func (h *handler) RegisterAuth(router *gin.RouterGroup) {
 	router.POST(userOneUrl, h.CreateUser)
 }
 
-func NewHandler(repository Repository, logger *logging.Logger) handlers.Handler {
+func NewHandler(repository Repository, logger *logging.Logger) handlers.HandlerAuth {
 	return &handler{
 		logger:     logger,
 		repository: repository,
 	}
-}
-
-func (h *handler) Register(router *gin.Engine) {
-
 }
 
 func (h *handler) CreateUser(ctx *gin.Context) {

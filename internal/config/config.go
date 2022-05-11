@@ -9,6 +9,12 @@ import (
 type Config struct {
 	IsDebug  *bool    `yaml:"is_debug"`
 	Postgres Postgres `yaml:"postgres"`
+	Listen   Listen   `yaml:"listen"`
+}
+
+type Listen struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
 type Postgres struct {

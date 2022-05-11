@@ -27,15 +27,11 @@ func (h *handler) RegisterAuth(router *gin.RouterGroup) {
 	router.PATCH(itemUrl, h.Edit)
 }
 
-func NewHandler(repository Repository, logger *logging.Logger) handlers.Handler {
+func NewHandler(repository Repository, logger *logging.Logger) handlers.HandlerAuth {
 	return &handler{
 		logger:     logger,
 		repository: repository,
 	}
-}
-
-func (h *handler) Register(router *gin.Engine) {
-
 }
 
 func (h *handler) GetItems(ctx *gin.Context) {

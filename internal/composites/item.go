@@ -10,7 +10,7 @@ import (
 
 type ItemComposite struct {
 	Repository items.Repository
-	Handler    handlers.Handler
+	Handler    handlers.HandlerAuth
 }
 
 func NewItemComposite(client *postgres.Client, logger *logging.Logger) (*ItemComposite, error) {
