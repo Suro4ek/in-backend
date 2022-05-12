@@ -9,3 +9,6 @@ postgres:
   pass: example
   db: postgres
 secret: verymegapupersupersecretpassword1231241245124124
+patterns:
+  user: "[a-zA-Z0-9_]+"
+  password: "[a-zA-Z0-9а-яА-Я]+"

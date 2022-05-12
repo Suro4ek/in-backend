@@ -11,11 +11,17 @@ type Config struct {
 	Postgres Postgres `yaml:"postgres"`
 	Listen   Listen   `yaml:"listen"`
 	Secret   string   `yaml:"secret"`
+	Pattern  Patterns `yaml:"patterns"`
 }
 
 type Listen struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
+}
+
+type Patterns struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 }
 
 type Postgres struct {

@@ -41,7 +41,7 @@ type register struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
 	Familia  string `form:"familia" json:"familia" binding:"required"`
-	Role     string `form:"role" json:"role" binding:"required"`
+	Role     string `form:"role" json:"role" binding:"required"` //TODO role check user or admin.
 	Name     string `form:"name" json:"name" binding:"required"`
 }
 
@@ -51,14 +51,13 @@ func (h *handler) CreateUser(ctx *gin.Context) {
 		ctx.String(http.StatusUnauthorized, "missing vals")
 		return
 	}
-	//TODO username and password regex and len to config user
-	usernameConvention := "[a-zA-Z0-9_]+"
+	usernameConvention := h.cfg.Pattern.User
 	re, _ := regexp.Compile(usernameConvention)
 	if !(len(registerVals.Username) > 4 && re.MatchString(registerVals.Username)) {
 		ctx.String(http.StatusUnauthorized, "wrong username")
 		return
 	}
-	passwordConvention := "[a-zA-Z0-9а-яА-Я]+"
+	passwordConvention := h.cfg.Pattern.Password
 	re, _ = regexp.Compile(passwordConvention)
 	if !(len(registerVals.Password) <= 12 && re.MatchString(registerVals.Password)) {
 		ctx.String(http.StatusUnauthorized, "wrong password")
