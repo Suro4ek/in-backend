@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -29,18 +30,16 @@ func NewAuthMiddleWare(Repository user.Repository, cfg *config.Config) (*authMid
 		MaxRefresh:  time.Hour,
 		IdentityKey: identityKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*user.User); ok {
+			if v, ok := data.(uint); ok {
 				return jwt.MapClaims{
-					identityKey: v.Username,
+					identityKey: v,
 				}
 			}
 			return jwt.MapClaims{}
 		},
 		IdentityHandler: func(g *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(g)
-			return &user.User{
-				Username: claims[identityKey].(string),
-			}
+			return claims["id"].(float64)
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			var loginVals login
@@ -56,11 +55,11 @@ func NewAuthMiddleWare(Repository user.Repository, cfg *config.Config) (*authMid
 			if err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(password)); err != nil {
 				return nil, jwt.ErrFailedAuthentication
 			}
-			return usr, nil
+			return usr.ID, nil
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
-			if v, ok := data.(*user.User); ok {
-				_, err := Repository.GetByUsername(context.TODO(), v.Username)
+			if v, ok := data.(float64); ok {
+				_, err := Repository.GetOne(context.TODO(), fmt.Sprint(v))
 				if err != nil {
 					return false
 				}

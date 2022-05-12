@@ -2,6 +2,7 @@ package composites
 
 import (
 	"in-backend/internal/auth"
+	"in-backend/internal/config"
 	"in-backend/internal/handlers"
 	"in-backend/internal/user"
 	"in-backend/pkg/logging"
@@ -11,8 +12,8 @@ type AuthComposite struct {
 	Handler handlers.Handler
 }
 
-func NewAuthComposite(logger *logging.Logger, Repository user.Repository) (*AuthComposite, error) {
-	handler := auth.NewHandler(logger, Repository)
+func NewAuthComposite(logger *logging.Logger, Repository user.Repository, cfg *config.Config) (*AuthComposite, error) {
+	handler := auth.NewHandler(logger, Repository, cfg)
 	return &AuthComposite{
 		handler,
 	}, nil
