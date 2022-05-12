@@ -10,6 +10,7 @@ type Config struct {
 	IsDebug  *bool    `yaml:"is_debug"`
 	Postgres Postgres `yaml:"postgres"`
 	Listen   Listen   `yaml:"listen"`
+	Secret   string   `yaml:"secret"`
 }
 
 type Listen struct {

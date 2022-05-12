@@ -1,6 +1,7 @@
 package composites
 
 import (
+	"in-backend/internal/config"
 	"in-backend/internal/handlers"
 	"in-backend/internal/user"
 	"in-backend/internal/user/db"
@@ -10,12 +11,12 @@ import (
 
 type UserComposite struct {
 	Repository user.Repository
-	Handler    handlers.HandlerAuth
+	Handler    handlers.Handler
 }
 
-func NewUserComposite(client *postgres.Client, logger *logging.Logger) (*UserComposite, error) {
+func NewUserComposite(client *postgres.Client, logger *logging.Logger, cfg *config.Config) (*UserComposite, error) {
 	repository := db.NewRepository(*client, logger)
-	handler := user.NewHandler(repository, logger)
+	handler := user.NewHandler(repository, logger, cfg)
 	return &UserComposite{
 		Repository: repository,
 		Handler:    handler,

@@ -4,10 +4,10 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	Name         string `json:"name,omitempty"`
-	Familia      string `json:"familia,omitempty"`
-	Role         string `json:"role"`
+	Name         string `json:"name,omitempty" gorm:"not null"`
+	Familia      string `json:"familia,omitempty" gorm:"not null"`
+	Role         string `json:"role" gorm:"not null"`
 	Password     string `json:"password" gorm:"-"`
-	PasswordHash string `json:"-"`
-	Username     string `json:"username,omitempty"`
+	PasswordHash string `json:"-" gorm:"not null"`
+	Username     string `json:"username,omitempty" gorm:"not null,unique"`
 }

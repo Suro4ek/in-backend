@@ -28,7 +28,7 @@ func NewHandler(logger *logging.Logger, repository user.Repository) handlers.Han
 }
 
 func (h *handler) Register(router *gin.Engine) {
-	router.POST(loginUrl, h.Login)
+	//router.POST(loginUrl, h.Login)
 }
 
 func (h *handler) Login(ctx *gin.Context) {
