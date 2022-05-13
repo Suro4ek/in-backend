@@ -64,13 +64,13 @@ func (h *handler) CreateUser(ctx *gin.Context) {
 		return
 	}
 	var usr = &user.User{
-		Username: registerVals.Username,
-		Password: registerVals.Password,
-		Role:     registerVals.Role,
-		Familia:  registerVals.Familia,
-		Name:     registerVals.Name,
+		Username:     registerVals.Username,
+		PasswordHash: registerVals.Password,
+		Role:         registerVals.Role,
+		Familia:      registerVals.Familia,
+		Name:         registerVals.Name,
 	}
-	password, err := bcrypt.GenerateFromPassword([]byte(usr.Password), bcrypt.DefaultCost)
+	password, err := bcrypt.GenerateFromPassword([]byte(usr.PasswordHash), bcrypt.DefaultCost)
 	if err != nil {
 		h.logger.Errorf("error to bcrypt password %t", err)
 		ctx.String(http.StatusInternalServerError, "error %t", err)
