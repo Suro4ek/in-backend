@@ -7,6 +7,8 @@ import (
 	"in-backend/internal/handlers"
 	"in-backend/pkg/logging"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -24,7 +26,8 @@ func (h *handler) RegisterAuth(router *gin.RouterGroup) {
 	router.GET(itemsUrl, h.GetItems)
 	router.GET(itemUrl, h.GetItem)
 	router.POST(itemOneUrl, h.CreateItem)
-	router.PATCH(itemUrl, h.Edit)
+	router.PATCH(itemOneUrl, h.Edit)
+	router.DELETE(itemUrl, h.Delete)
 }
 
 func NewHandler(repository Repository, logger *logging.Logger) handlers.HandlerAuth {
@@ -64,31 +67,50 @@ func (h *handler) GetItem(ctx *gin.Context) {
 }
 
 func (h *handler) CreateItem(ctx *gin.Context) {
-	var itm Item
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&itm); err != nil {
-		h.logger.Errorf("error json decode %t", err)
-		ctx.String(http.StatusInternalServerError, "error %t", err)
+	var dto CreateItemDTO
+	if err := ctx.ShouldBind(&dto); err != nil || strings.TrimSpace(dto.Name) == "" || strings.TrimSpace(dto.ProductName) == "" || strings.TrimSpace(dto.SerialNumber) == "" {
+		ctx.String(http.StatusBadRequest, "missing vals")
+		return
 	}
 
-	if err := h.repository.Create(context.TODO(), &itm); err != nil {
+	itm := &Item{Name: dto.Name, ProductName: dto.ProductName, SerialNumber: dto.SerialNumber}
+
+	if err := h.repository.Create(context.TODO(), itm); err != nil {
 		h.logger.Errorf("Error create item %t", err)
 		ctx.String(http.StatusInternalServerError, "error %t", err)
 	}
-	//TODO redirect location ctx.Redirect(code, location)
-	ctx.String(http.StatusOK, "item successful created")
+
+	ctx.JSON(http.StatusOK, itm)
+}
+
+func (h *handler) Delete(ctx *gin.Context) {
+	id := ctx.Param("id")
+	err := h.repository.Delete(context.TODO(), id)
+	if err != nil {
+		h.logger.Errorf("Error get item %t", err)
+		ctx.String(http.StatusInternalServerError, "error %t", err)
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":   200,
+		"status": "Успешно удалено",
+	})
 }
 
 func (h *handler) Edit(ctx *gin.Context) {
-	var itm Item
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&itm); err != nil {
-		h.logger.Errorf("error json decode %t", err)
+	var dto EditItemDTO
+	itm, err := h.repository.GetOne(context.TODO(), strconv.Itoa(int(dto.ID)))
+	if err != nil {
+		h.logger.Errorf("Error get item %t", err)
 		ctx.String(http.StatusInternalServerError, "error %t", err)
 	}
+	itm.Name = dto.Name
+	itm.ProductName = dto.ProductName
+	itm.SerialNumber = dto.SerialNumber
+	itm.OwnerID = dto.OwnerID
 
 	if err := h.repository.Update(context.TODO(), itm); err != nil {
 		h.logger.Errorf("Error create user %t", err)
 		ctx.String(http.StatusInternalServerError, "error %t", err)
 	}
-	//TODO redirect location ctx.Redirect(code, location)
-	ctx.String(http.StatusOK, "user updated")
+	ctx.JSON(http.StatusOK, itm)
 }

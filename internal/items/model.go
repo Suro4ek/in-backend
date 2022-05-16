@@ -14,6 +14,6 @@ type Item struct {
 	ProductName  string         `json:"productName,omitempty"`
 	SerialNumber string         `json:"serialNumber,omitempty"`
 	Name         string         `json:"name,omitempty"`
-	OwnerID      *int           `json:"owner,omitempty'"`
-	Owner        user.User      `json:"-'" gorm:"OnDelete:SET NULL;"`
+	OwnerID      *int           `json:"-"`
+	Owner        *user.User     `gorm:"OnDelete:SET NULL;"`
 }
