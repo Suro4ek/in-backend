@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"in-backend/internal/config"
 	"in-backend/internal/user"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,15 @@ type authMiddleware struct {
 type login struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
+}
+
+func isElementExist(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
 
 func NewAuthMiddleWare(Repository user.Repository, cfg *config.Config) (*authMiddleware, error) {
@@ -59,13 +69,20 @@ func NewAuthMiddleWare(Repository user.Repository, cfg *config.Config) (*authMid
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			if v, ok := data.(float64); ok {
-				_, err := Repository.GetOne(context.TODO(), fmt.Sprint(v))
+				usr, err := Repository.GetOne(context.TODO(), fmt.Sprint(v))
 				if err != nil {
 					return false
 				}
+				var link = strings.Split(c.Request.URL.Path, "/")[1]
+				if link == "admin" {
+					if usr.Role == "admin" {
+						return true
+					} else {
+						return false
+					}
+				}
 				return true
 			}
-
 			return false
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {

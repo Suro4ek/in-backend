@@ -30,6 +30,16 @@ func (r *repository) GetOne(ctx context.Context, id string) (user.User, error) {
 	return usr, err
 }
 
+func (r *repository) CheckAdmin(ctx context.Context) bool {
+	r.logger.Tracef("Find user by role admin")
+	var usr user.User
+	err := r.client.DB.Model(user.User{}).First(&usr, "role = ?", "admin").Error
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func (r *repository) GetByUsername(ctx context.Context, username string) (user.User, error) {
 	r.logger.Tracef("Find user by username %s", username)
 	var usr user.User

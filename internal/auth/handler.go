@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -12,7 +11,6 @@ import (
 	"in-backend/pkg/logging"
 	"net/http"
 	"regexp"
-	"time"
 )
 
 const (
@@ -25,7 +23,15 @@ type handler struct {
 	cfg        *config.Config
 }
 
-func NewHandler(logger *logging.Logger, repository user.Repository, cfg *config.Config) handlers.Handler {
+func (h *handler) RegisterAdmin(router *gin.RouterGroup) {
+	router.POST(registerUrl, h.CreateUser)
+}
+
+func (h *handler) RegisterAuth(router *gin.RouterGroup) {
+	//router.POST(registerUrl, h.CreateUser)
+}
+
+func NewHandler(logger *logging.Logger, repository user.Repository, cfg *config.Config) handlers.HandlerAuth {
 	return &handler{
 		logger:     logger,
 		repository: repository,
@@ -33,40 +39,44 @@ func NewHandler(logger *logging.Logger, repository user.Repository, cfg *config.
 	}
 }
 
-func (h *handler) Register(router *gin.Engine) {
-	router.POST(registerUrl, h.CreateUser)
-}
-
 type register struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
 	Familia  string `form:"familia" json:"familia" binding:"required"`
-	Role     string `form:"role" json:"role" binding:"required"` //TODO role check user or admin.
 	Name     string `form:"name" json:"name" binding:"required"`
 }
 
 func (h *handler) CreateUser(ctx *gin.Context) {
 	var registerVals register
 	if err := ctx.ShouldBind(&registerVals); err != nil {
-		ctx.String(http.StatusUnauthorized, "missing vals")
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"code":    500,
+			"message": "missing vals",
+		})
 		return
 	}
 	usernameConvention := h.cfg.Pattern.User
 	re, _ := regexp.Compile(usernameConvention)
-	if !(len(registerVals.Username) > 4 && re.MatchString(registerVals.Username)) {
-		ctx.String(http.StatusUnauthorized, "wrong username")
+	if !re.MatchString(registerVals.Username) || len(registerVals.Username) < 4 {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"code":    500,
+			"message": "wrong username",
+		})
 		return
 	}
 	passwordConvention := h.cfg.Pattern.Password
 	re, _ = regexp.Compile(passwordConvention)
-	if !(len(registerVals.Password) <= 12 && re.MatchString(registerVals.Password)) {
-		ctx.String(http.StatusUnauthorized, "wrong password")
+	if !re.MatchString(registerVals.Password) || len(registerVals.Password) <= 5 {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"code":    500,
+			"message": "wrong password",
+		})
 		return
 	}
 	var usr = &user.User{
 		Username:     registerVals.Username,
 		PasswordHash: registerVals.Password,
-		Role:         registerVals.Role,
+		Role:         "user",
 		Familia:      registerVals.Familia,
 		Name:         registerVals.Name,
 	}
@@ -79,25 +89,24 @@ func (h *handler) CreateUser(ctx *gin.Context) {
 	usr.PasswordHash = string(password)
 	if err := h.repository.Create(context.TODO(), usr); err != nil {
 		h.logger.Errorf("Error create user %t", err)
-		ctx.String(http.StatusInternalServerError, "error user is duplicate")
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "error user is duplicate",
+		})
 		return
 	}
-	token := jwt.New(jwt.GetSigningMethod("HS256"))
-	claims := token.Claims.(jwt.MapClaims)
-	claims["id"] = usr.ID
-	expire := time.Now().Add(time.Hour)
-	claims["exp"] = expire.Unix()
-	claims["orig_iat"] = time.Now().Unix()
-	tokenString, err := h.signedString(token)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"code":   http.StatusOK,
-		"token":  tokenString,
-		"expire": expire.Format(time.RFC3339),
-	})
+	//token := jwt.New(jwt.GetSigningMethod("HS256"))
+	//claims := token.Claims.(jwt.MapClaims)
+	//claims["id"] = usr.ID
+	//expire := time.Now().Add(time.Hour)
+	//claims["exp"] = expire.Unix()
+	//claims["orig_iat"] = time.Now().Unix()
+	//tokenString, err := h.signedString(token)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	ctx.JSON(http.StatusOK, usr)
 }
 
 func (h *handler) signedString(token *jwt.Token) (string, error) {

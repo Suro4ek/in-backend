@@ -8,4 +8,5 @@ type Handler interface {
 
 type HandlerAuth interface {
 	RegisterAuth(router *gin.RouterGroup)
+	RegisterAdmin(router *gin.RouterGroup)
 }

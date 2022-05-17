@@ -2,9 +2,9 @@ package items
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"in-backend/internal/handlers"
+	"in-backend/internal/user"
 	"in-backend/pkg/logging"
 	"net/http"
 	"strconv"
@@ -18,22 +18,28 @@ const (
 )
 
 type handler struct {
-	logger     *logging.Logger
-	repository Repository
+	logger         *logging.Logger
+	repository     Repository
+	userRepository user.Repository
+}
+
+func (h *handler) RegisterAdmin(router *gin.RouterGroup) {
+	router.GET(itemsUrl, h.GetItems)
+	router.GET(itemUrl, h.GetItem)
+	router.POST(itemOneUrl, h.CreateItem)
+	router.DELETE(itemUrl, h.Delete)
 }
 
 func (h *handler) RegisterAuth(router *gin.RouterGroup) {
 	router.GET(itemsUrl, h.GetItems)
-	router.GET(itemUrl, h.GetItem)
-	router.POST(itemOneUrl, h.CreateItem)
-	router.PATCH(itemOneUrl, h.Edit)
-	router.DELETE(itemUrl, h.Delete)
+	router.PATCH(itemUrl, h.Edit)
 }
 
-func NewHandler(repository Repository, logger *logging.Logger) handlers.HandlerAuth {
+func NewHandler(repository Repository, userRepository user.Repository, logger *logging.Logger) handlers.HandlerAuth {
 	return &handler{
-		logger:     logger,
-		repository: repository,
+		logger:         logger,
+		repository:     repository,
+		userRepository: userRepository,
 	}
 }
 
@@ -42,13 +48,20 @@ func (h *handler) GetItems(ctx *gin.Context) {
 	if err != nil {
 		ctx.Status(http.StatusNotFound)
 	}
-
-	//allBytes, err := json.Marshal(all)
-	//if err != nil {
-	//	ctx.String(http.StatusInternalServerError, "error %t", err)
-	//}
-
-	ctx.JSON(http.StatusOK, all)
+	items := make([]Item, 0)
+	for _, itm := range all {
+		if itm.OwnerID != nil {
+			usr, err := h.userRepository.GetOne(context.TODO(), strconv.Itoa(*itm.OwnerID))
+			if err != nil {
+				h.logger.Errorf("Error get user by item %t", err)
+				itm.Owner = nil
+			} else {
+				itm.Owner = &usr
+			}
+		}
+		items = append(items, itm)
+	}
+	ctx.JSON(http.StatusOK, items)
 }
 
 func (h *handler) GetItem(ctx *gin.Context) {
@@ -58,15 +71,11 @@ func (h *handler) GetItem(ctx *gin.Context) {
 		ctx.Status(http.StatusNotFound)
 	}
 
-	allBytes, err := json.Marshal(one)
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, "error %t", err)
-	}
-
-	ctx.JSONP(http.StatusOK, allBytes)
+	ctx.JSON(http.StatusOK, one)
 }
 
 func (h *handler) CreateItem(ctx *gin.Context) {
+
 	var dto CreateItemDTO
 	if err := ctx.ShouldBind(&dto); err != nil || strings.TrimSpace(dto.Name) == "" || strings.TrimSpace(dto.ProductName) == "" || strings.TrimSpace(dto.SerialNumber) == "" {
 		ctx.String(http.StatusBadRequest, "missing vals")
@@ -98,15 +107,39 @@ func (h *handler) Delete(ctx *gin.Context) {
 
 func (h *handler) Edit(ctx *gin.Context) {
 	var dto EditItemDTO
-	itm, err := h.repository.GetOne(context.TODO(), strconv.Itoa(int(dto.ID)))
+	id := ctx.Param("id")
+	if err := ctx.ShouldBind(&dto); err != nil {
+		ctx.String(http.StatusBadRequest, "missing vals")
+		return
+	}
+	itm, err := h.repository.GetOne(context.TODO(), id)
 	if err != nil {
 		h.logger.Errorf("Error get item %t", err)
 		ctx.String(http.StatusInternalServerError, "error %t", err)
 	}
-	itm.Name = dto.Name
-	itm.ProductName = dto.ProductName
-	itm.SerialNumber = dto.SerialNumber
-	itm.OwnerID = dto.OwnerID
+	if dto.OwnerID != nil {
+		if *dto.OwnerID < 0 {
+			itm.Owner = nil
+		} else {
+			usr, err := h.userRepository.GetOne(context.TODO(), strconv.Itoa(*dto.OwnerID))
+			if err != nil {
+				h.logger.Errorf("Error get user by item %t", err)
+				ctx.String(http.StatusInternalServerError, "error %t", err)
+			}
+			itm.Owner = &usr
+		}
+	}
+	if dto.Name != nil && strings.TrimSpace(*dto.Name) != "" {
+		itm.Name = *dto.Name
+	}
+
+	if dto.ProductName != nil && strings.TrimSpace(*dto.ProductName) != "" {
+		itm.ProductName = *dto.ProductName
+	}
+
+	if dto.SerialNumber != nil && strings.TrimSpace(*dto.SerialNumber) != "" {
+		itm.SerialNumber = *dto.SerialNumber
+	}
 
 	if err := h.repository.Update(context.TODO(), itm); err != nil {
 		h.logger.Errorf("Error create user %t", err)

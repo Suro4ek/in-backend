@@ -9,7 +9,7 @@ import (
 )
 
 type AuthComposite struct {
-	Handler handlers.Handler
+	Handler handlers.HandlerAuth
 }
 
 func NewAuthComposite(logger *logging.Logger, Repository user.Repository, cfg *config.Config) (*AuthComposite, error) {

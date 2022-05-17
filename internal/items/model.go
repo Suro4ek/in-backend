@@ -7,7 +7,7 @@ import (
 )
 
 type Item struct {
-	ID           uint           `gorm:"primarykey"`
+	ID           *uint          `json:"id,omitempty" gorm:"primarykey"`
 	CreatedAt    time.Time      `json:"-"`
 	UpdatedAt    time.Time      `json:"-"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
@@ -15,5 +15,5 @@ type Item struct {
 	SerialNumber string         `json:"serialNumber,omitempty"`
 	Name         string         `json:"name,omitempty"`
 	OwnerID      *int           `json:"-"`
-	Owner        *user.User     `gorm:"OnDelete:SET NULL;"`
+	Owner        *user.User     `json:"owner,omitempty" gorm:"OnDelete:SET NULL;"`
 }
