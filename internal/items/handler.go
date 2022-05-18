@@ -28,6 +28,7 @@ func (h *handler) RegisterAdmin(router *gin.RouterGroup) {
 	router.GET(itemUrl, h.GetItem)
 	router.POST(itemOneUrl, h.CreateItem)
 	router.DELETE(itemUrl, h.Delete)
+	router.PATCH(itemUrl, h.EditAdmin)
 }
 
 func (h *handler) RegisterAuth(router *gin.RouterGroup) {
@@ -112,6 +113,40 @@ func (h *handler) Edit(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "missing vals")
 		return
 	}
+
+	itm, err := h.repository.GetOne(context.TODO(), id)
+	if err != nil {
+		h.logger.Errorf("Error get item %t", err)
+		ctx.String(http.StatusInternalServerError, "error %t", err)
+	}
+	if dto.OwnerID != nil {
+		if *dto.OwnerID < 0 {
+			itm.Owner = nil
+		} else {
+			usr, err := h.userRepository.GetOne(context.TODO(), strconv.Itoa(*dto.OwnerID))
+			if err != nil {
+				h.logger.Errorf("Error get user by item %t", err)
+				ctx.String(http.StatusInternalServerError, "error %t", err)
+			}
+			itm.Owner = &usr
+		}
+	}
+
+	if err := h.repository.Update(context.TODO(), itm); err != nil {
+		h.logger.Errorf("Error update item %t", err)
+		ctx.String(http.StatusInternalServerError, "error %t", err)
+	}
+	ctx.JSON(http.StatusOK, itm)
+}
+
+func (h *handler) EditAdmin(ctx *gin.Context) {
+	var dto EditItemDTO
+	id := ctx.Param("id")
+	if err := ctx.ShouldBind(&dto); err != nil {
+		ctx.String(http.StatusBadRequest, "missing vals")
+		return
+	}
+
 	itm, err := h.repository.GetOne(context.TODO(), id)
 	if err != nil {
 		h.logger.Errorf("Error get item %t", err)
@@ -142,7 +177,7 @@ func (h *handler) Edit(ctx *gin.Context) {
 	}
 
 	if err := h.repository.Update(context.TODO(), itm); err != nil {
-		h.logger.Errorf("Error create user %t", err)
+		h.logger.Errorf("Error update item %t", err)
 		ctx.String(http.StatusInternalServerError, "error %t", err)
 	}
 	ctx.JSON(http.StatusOK, itm)
