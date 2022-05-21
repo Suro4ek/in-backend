@@ -7,16 +7,10 @@ import (
 )
 
 type Config struct {
-	IsDebug  *bool    `yaml:"is_debug"`
+	IsDebug  *bool    `yaml:"is_debug" env:"ISDEBUG"`
 	Postgres Postgres `yaml:"postgres"`
-	Listen   Listen   `yaml:"listen"`
-	Secret   string   `yaml:"secret"`
+	Secret   string   `yaml:"secret" env:"JWT_SECRET"`
 	Pattern  Patterns `yaml:"patterns"`
-}
-
-type Listen struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
 }
 
 type Patterns struct {
@@ -25,11 +19,11 @@ type Patterns struct {
 }
 
 type Postgres struct {
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"pass"`
-	DB       string `yaml:"db"`
+	Host     string `yaml:"host" env:"POSTGRES_HOST"`
+	Port     string `yaml:"port" env:"POSTGRES_PORT"`
+	User     string `yaml:"user" env:"POSTGRES_USER"`
+	Password string `yaml:"pass" env:"POSTGRES_PASS"`
+	DB       string `yaml:"db" env:"POSTGRES_DB"`
 }
 
 var instance *Config
@@ -41,6 +35,11 @@ func GetConfig() *Config {
 		logger.Info("read application config")
 		instance = &Config{}
 		if err := cleanenv.ReadConfig("config.yml", instance); err != nil {
+			help, _ := cleanenv.GetDescription(instance, nil)
+			logger.Info(help)
+			logger.Fatal(err)
+		}
+		if err := cleanenv.ReadEnv(instance); err != nil {
 			help, _ := cleanenv.GetDescription(instance, nil)
 			logger.Info(help)
 			logger.Fatal(err)

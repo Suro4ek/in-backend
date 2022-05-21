@@ -1,0 +1,6 @@
+logs/
+.git
+.gitignore
+LISENSE
+README.md
+*.xlsx

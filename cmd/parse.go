@@ -9,7 +9,6 @@ import (
 	"in-backend/internal/items"
 	"in-backend/pkg/logging"
 	"in-backend/pkg/postgres"
-	"strings"
 )
 
 func main1() {
@@ -34,42 +33,26 @@ func main1() {
 			fmt.Println(err)
 		}
 	}()
-	rows, err := f.GetRows("Реестр")
+	rows, err := f.GetRows("TDSheet")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	for index, row := range rows {
-		if index < 8 {
+		if index < 9 {
 			continue
 		}
 		if row == nil {
 			continue
 		}
 		var itm *items.Item
-		if len(row) == 4 {
-			itm = &items.Item{
-				ProductName:  row[2],
-				Name:         row[3],
-				SerialNumber: "нету",
-			}
-		} else {
-			if strings.TrimSpace(row[4]) == "" {
-				itm = &items.Item{
-					ProductName:  row[2],
-					Name:         row[3],
-					SerialNumber: "нету",
-				}
-			} else {
-				itm = &items.Item{
-					ProductName:  row[2],
-					Name:         row[3],
-					SerialNumber: row[4],
-				}
-			}
+		itm = &items.Item{
+			ProductName:  row[2],
+			Name:         "не назначена",
+			SerialNumber: row[5],
 		}
 
-		fmt.Print(itm.ProductName+" "+itm.SerialNumber+" "+itm.Name+" ", "\t")
+		fmt.Print(itm.ProductName+" "+itm.SerialNumber+" "+itm.Name+" ", "\n")
 		err := item.Repository.Create(context.TODO(), itm)
 		if err != nil {
 			return

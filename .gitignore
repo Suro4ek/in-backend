@@ -1,2 +1,4 @@
 logs
-rest.xlsx
+*.xlsx
+*.xls
+.env

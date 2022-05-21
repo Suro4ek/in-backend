@@ -52,7 +52,7 @@ func main() {
 	userComposite.Handler.RegisterAdmin(authorized1)
 	userComposite.Handler.RegisterAuth(authorized)
 
-	err = r.Run(cfg.Listen.Host + ":" + cfg.Listen.Port)
+	err = r.Run("0.0.0.0:8080")
 	if err != nil {
 		logger.Errorf("error startup application %t", err)
 		return
